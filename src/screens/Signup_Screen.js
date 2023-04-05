@@ -4,14 +4,15 @@ import { TextInput, StyleSheet, View, ActivityIndicator, Text, Image, Dimensions
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { addDoc, collection } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useNavigation } from '@react-navigation/native';
+import { ScrollView } from 'react-native';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 
-const SignupScreen = ({  }) => {
+const SignupScreen = ({ }) => {
     const navigation = useNavigation()
     const [load, setLoad] = useState(false)
     const [data, setData] = useState({
@@ -19,6 +20,8 @@ const SignupScreen = ({  }) => {
         email: '',
         password: '',
         confirmPassword: '',
+        city: '',
+        number: ''
     });
 
     const onChangeData = e => {
@@ -31,76 +34,97 @@ const SignupScreen = ({  }) => {
 
     const register = async () => {
         setLoad(true)
-        createUserWithEmailAndPassword(auth, data.email, data.password,)
-        .then((userCredential) => {
-           const  user = userCredential.user;
-           console.log('--->user',user);
-            if (user.uid) {
-                const docRef = addDoc(collection(db, 'users'), {
-                    Full_name: data.name,
-                    Email_user: data.email,
-                    city: '',
-                    phone_number: ''
-                });
-                setLoad(false);
-                alert("User Creates Successfully!")
-                navigation.navigate('Login');
-            }    
-        })
-        .catch((error) => {
-            console.log('error --->',error);
+        try {
+            await createUserWithEmailAndPassword(auth, data.email, data.password).catch((err) =>
+                console.log('11-', err)
+            );
+            await updateProfile(auth.currentUser, { displayName: data.name }).catch(
+                (err) => console.log('3-', err)
+            );
+            await addDoc(collection(db, "users"), {
+                userName: data.name,
+                userEmial: data.email,
+                userCity: data.city,
+                userPhone: data.number
+            })
+            setLoad(false);
+            alert("User Creates Successfully!")
+            navigation.navigate('Login');
+        } catch (err) {
+            console.log('4-', err);
             alert("Something Went Wrong!")
             setLoad(false)
-        });        
-        
+        }
+
     };
 
     return (
         <View style={styles.container}>
             <Image style={styles.image} source={require("../../assets/download.png")} />
             <StatusBar style="auto" />
-            <View style={styles.inputView}>
-                <TextInput
-                    style={styles.TextInput}
-                    placeholder="Full Name."
-                    placeholderTextColor="#003f5c"
-                    onChangeText={text =>
-                        onChangeData({ name: 'name', value: text })
-                    }
-                />
-            </View>
-            <View style={styles.inputView}>
-                <TextInput
-                    style={styles.TextInput}
-                    placeholder="Email"
-                    placeholderTextColor="#003f5c"
-                    onChangeText={text =>
-                        onChangeData({ name: 'email', value: text })
-                    } />
-            </View>
-
-            <View style={styles.inputView}>
-                <TextInput
-                    style={styles.TextInput}
-                    placeholder="Password Here"
-                    placeholderTextColor="#003f5c"
-                    secureTextEntry={true}
-                    onChangeText={text =>
-                        onChangeData({ name: 'password', value: text })
-                    }
-                />
-            </View>
-            <View style={styles.inputView}>
-                <TextInput
-                    style={styles.TextInput}
-                    placeholder="Confirm Password"
-                    placeholderTextColor="#003f5c"
-                    secureTextEntry={true}
-                    onChangeText={text =>
-                        onChangeData({ name: 'confirmPassword', value: text })
-                    }
-                />
-            </View>
+                <View style={styles.inputView}>
+                    <TextInput
+                        style={styles.TextInput}
+                        placeholder="Full Name."
+                        placeholderTextColor="#003f5c"
+                        onChangeText={text =>
+                            onChangeData({ name: 'name', value: text })
+                        }
+                    />
+                </View>
+                <View style={styles.inputView}>
+                    <TextInput
+                        style={styles.TextInput}
+                        placeholder="Email"
+                        placeholderTextColor="#003f5c"
+                        onChangeText={text =>
+                            onChangeData({ name: 'email', value: text })
+                        } />
+                </View>
+                <View style={styles.inputView}>
+                    <TextInput
+                        style={styles.TextInput}
+                        placeholder="Password Here"
+                        placeholderTextColor="#003f5c"
+                        secureTextEntry={true}
+                        onChangeText={text =>
+                            onChangeData({ name: 'password', value: text })
+                        }
+                    />
+                </View>
+                <View style={styles.inputView}>
+                    <TextInput
+                        style={styles.TextInput}
+                        placeholder="Confirm Password"
+                        placeholderTextColor="#003f5c"
+                        secureTextEntry={true}
+                        onChangeText={text =>
+                            onChangeData({ name: 'confirmPassword', value: text })
+                        }
+                    />
+                </View>
+                <View style={styles.inputView}>
+                    <TextInput
+                        style={styles.TextInput}
+                        placeholder="City"
+                        placeholderTextColor="#003f5c"
+                        inputMode='text'
+                        onChangeText={text =>
+                            onChangeData({ name: 'city', value: text })
+                        }
+                    />
+                </View>
+                <View style={styles.inputView}>
+                    <TextInput
+                        style={styles.TextInput}
+                        placeholder="number"
+                        placeholderTextColor="#003f5c"
+                        inputMode='tel'
+                        onChangeText={text =>
+                            onChangeData({ name: 'number', value: text })
+                        }
+                    />
+                </View>
             <TouchableOpacity style={styles.loginBtn}
                 onPress={() => {
                     if (data.password != data.confirmPassword) {

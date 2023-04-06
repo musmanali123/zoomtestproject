@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { TextInput, StyleSheet, View, ActivityIndicator, Text, Image, Dimensions } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection ,doc,setDoc} from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useNavigation } from '@react-navigation/native';
@@ -41,15 +41,14 @@ const SignupScreen = ({ }) => {
             await updateProfile(auth.currentUser, { displayName: data.name }).catch(
                 (err) => console.log('3-', err)
             );
-            await addDoc(collection(db, "users"), {
+            await setDoc(doc(db, "users",auth.currentUser.uid), {
                 userName: data.name,
-                userEmial: data.email,
                 userCity: data.city,
                 userPhone: data.number
             })
             setLoad(false);
             alert("User Creates Successfully!")
-            navigation.navigate('Login');
+            navigation.navigate('Home');
         } catch (err) {
             console.log('4-', err);
             alert("Something Went Wrong!")

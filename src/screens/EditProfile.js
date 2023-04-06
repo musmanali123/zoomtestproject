@@ -1,6 +1,6 @@
-import { View, Text, Image, StatusBar, Dimensions, TextInput, ActivityIndicator, StyleSheet, ImageBackground } from "react-native";
+import { View, Text, StatusBar, Dimensions, TextInput, ActivityIndicator, StyleSheet, ImageBackground } from "react-native";
 import React, { useEffect, useState } from "react";
-import { addDoc, collection, doc, getDoc,getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { TouchableOpacity } from "react-native-gesture-handler";
 
@@ -8,11 +8,10 @@ const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 const EditProfile = ({ navigation }) => {
-    // const [existsData, setExistsData] = useState()
+    const [existsData, setExistsData] = useState({})
     const [isUser, setIsUser] = useState(false)
     const [data, setData] = useState({
         name: '',
-        email: '',
         city: '',
         number: '',
     });
@@ -20,18 +19,10 @@ const EditProfile = ({ navigation }) => {
     useEffect(() => {
         const fetchData = async () => {
             const docRef = doc(db, "users", auth.currentUser.uid);
-            const docSnap = await getDocs(docRef);
-            console.log('---->',auth.currentUser);
+            const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                setIsUser(true)
-                console.log('------>', docSnap.data());
-                // setData(docSnap.data().Full_name)
+                setExistsData(docSnap.data());
             } else {
-                // setExistsData({
-                //     name: auth.currentUser.displayName,
-                //     email: auth.currentUser.email
-                // })
-                setIsUser(false)
                 console.log('no_DATA');
             }
         }
@@ -45,79 +36,89 @@ const EditProfile = ({ navigation }) => {
         });
     };
 
-    // const addData = async () => {
-    //     const docData = await addDoc(collection(db, "users"), {
-    //         userName: data.name,
-    //         userEmial:data.email,
-    //         userCity: data.city,
-    //         userPhone: data.number
-    //     })
-    //     console.log('------>',docData);
-    // }
 
-
+    const updateData =  () => {
+        setIsUser(true)
+        const oldData = doc(db, "users", auth.currentUser.uid)
+         updateDoc(oldData, {
+            userName: data.name,
+            userCity: data.city,
+            userPhone: data.number
+        }).then((res) => {
+            setIsUser(true);
+            setTimeout(() => {
+                setIsUser(false);
+            }, 2000)
+            alert("update profile successfully!")
+        }).catch((err) => {
+            setIsUser(true);
+            setTimeout(() => {
+                setIsUser(false);
+            }, 2000)
+            alert("smothing Went Wrong!")
+            console.log(err);
+        })
+    }
 
     return (
         <View style={styles.container}>
             <ImageBackground
-                source={require("../../assets/user.png")}
+                source={require("../../assets/Basic.jpg")}
                 style={{ height: 100, width: 100, }}
                 imageStyle={styles.image}
             >
             </ImageBackground>
             <View style={{ padding: 10 }}></View>
             <StatusBar style="auto" />
+            <Text style={{ fontSize: 18, fontWeight: '400', alignSelf: "center" }}>Name</Text>
             <View style={styles.inputView}>
                 <TextInput
                     style={styles.TextInput}
-                    placeholder={auth.currentUser.displayName}
+                    placeholder={existsData.userName}
                     placeholderTextColor="#003f5c"
-                onChangeText={text =>
-                    onChangeData({ name: 'name', value: !isUser? text:auth.currentUser.displayName })
-                }
+                    onChangeText={text =>
+                        onChangeData({ name: 'name', value: text })
+                    }
                 />
             </View>
+            <Text style={{ fontSize: 18, fontWeight: '400', alignSelf: "center" }}>City</Text>
             <View style={styles.inputView}>
                 <TextInput
                     style={styles.TextInput}
-                    placeholder={auth.currentUser.email}
-                    placeholderTextColor="#003f5c"
-                onChangeText={text =>
-                    onChangeData({ name: 'email', value: !isUser ? text : auth.currentUser.email })
-                } 
-                />
-            </View>
-
-            <View style={styles.inputView}>
-                <TextInput
-                    style={styles.TextInput}
-                    placeholder="City"
+                    placeholder={existsData.userCity}
                     placeholderTextColor="#003f5c"
                     inputMode="text"
-                onChangeText={text =>
-                    onChangeData({ name: 'city', value: text })
-                }
+                    onChangeText={text =>
+                        onChangeData({ name: 'city', value: text })
+                    }
                 />
             </View>
+            <Text style={{ fontSize: 18, fontWeight: '400', alignSelf: "center" }}>Phone Number</Text>
             <View style={styles.inputView}>
                 <TextInput
                     style={styles.TextInput}
-                    placeholder="Phone number"
+                    placeholder={existsData.userPhone}
                     placeholderTextColor="#003f5c"
                     inputMode="tel"
-                onChangeText={text =>
-                    onChangeData({ name: 'number', value: text })
-                }
+                    onChangeText={text =>
+                        onChangeData({ name: 'number', value: text })
+                    }
                 />
             </View>
             <TouchableOpacity style={styles.loginBtn}
                 onPress={() => {
-                    addData()
-                }
-                }
+                    if (data.name == '' && data.city == '' && data.number == '') {
+                        alert("Fields are missings!")
+                    } else {
+                        updateData()
+                    }
+                }}
             >
-                <Text style={{ color: '#ffffff' }}>{isUser ? "Add":"Edit"}</Text>
-
+                {isUser ?
+                    <ActivityIndicator size={"large"} />
+                    :
+                    <Text style={{ color: '#ffffff' }}>{"Save Edit"}</Text>
+                }
             </TouchableOpacity>
         </View>
 
